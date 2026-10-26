@@ -275,6 +275,24 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
 - ComfyUI 队列接口默认为 `/queue`；其它图像服务可以在 profile 里改 `queue.url`，或设为不可用。
 - 默认不做 provider 切换；需要的话继承 `NullProviderHooks` 并在适配器里实现。
 
+## 在市场里安装
+
+- **AstrBot**：在 AstrBot WebUI → 插件市场 搜索 **VRAM Switcher**，或
+  [cloud.astrbot.app](https://cloud.astrbot.app/) 搜索仓库 `xiaoxiao150/vram-switcher`。
+- **DSH**：在 DSH 插件市场搜索 **vram-switcher**（来自
+  [awesome-dsh-plugin](https://awesome-dsh-plugin.com/p/xiaoxiao150/vram-switcher/)）。
+- 也可以直接从源码安装：
+
+  ```bash
+  # AstrBot
+  git clone https://github.com/xiaoxiao150/vram-switcher     AstrBot/data/plugins/astrbot_plugin_vram_switcher
+
+  # DSH
+  dsh plugin --profile web add github:xiaoxiao150/vram-switcher
+  ```
+
+发布信息：[v2.0.0 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.0)。
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

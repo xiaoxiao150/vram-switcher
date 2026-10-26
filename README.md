@@ -75,6 +75,22 @@ LLM 常驻，显存 4.9 GB / 12 GB
 
 也**少做**这些：多卡、游戏/VM、优先级队列、网关、`nvidia-smi` 轮询、provider 自动切换。需要这些就选上面的通用项目。
 
+不跑 AstrBot / DSH 也可以：核心包 `vram_switcher` 不依赖宿主，`VramService` 提供 `start / acquire / release / status`，可以直接在你的 AI 陪伴服务里用：
+
+```python
+from vram_switcher import load_config
+from vram_switcher.service import VramService
+
+cfg = load_config({"profile_path": "profile.local.json"}, plugin_dir=".", data_dir="./data")
+service = VramService(cfg)
+await service.start()
+await service.acquire("image", reason="selfie")   # 停 LLM、起 ComfyUI
+# ... 出图 ...
+await service.release("selfie")                   # 停 ComfyUI、恢复 LLM
+```
+
+语音侧仍建议走 `tts_busy.flag` / `tts_ready.flag`，因为只有 TTS 插件知道合成什么时候真正结束。
+
 ## 快速开始
 
 ```bash

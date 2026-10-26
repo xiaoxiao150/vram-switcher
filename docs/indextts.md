@@ -289,6 +289,7 @@ AstrBot 适配层的触发点：
 - 它不修改 IndexTTS 本身，也不读取音频内容。
 - 它不能替代 TTS 自己的错误处理；合成失败时仍要删 busy，否则要等 900 秒清理。
 - 如果你的 TTS 有真正的 unload API，优先用 API（更快、无需重启进程）；文件协议是给“只能停进程”的服务的。
+- Windows + AMD 显卡上，IndexTTS 的 PyTorch/ROCm 后端可能本身就是门槛；先单独跑通 webui，再谈调度。见 [`gpu-support.md`](gpu-support.md)。
 
 ## 11. 不用 AstrBot / DSH 也可以
 

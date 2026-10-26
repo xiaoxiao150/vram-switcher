@@ -2,7 +2,7 @@
 
 **Native GPU coordination for local AI companions on AstrBot / DeepSeek Harness — persona chat, IndexTTS voice and ComfyUI selfies taking turns on one 12 GB card.**
 
-[中文](README.md) · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · [IndexTTS integration](docs/indextts.md) (Chinese) · [vs. llama-swap / berth](docs/comparison.md) (Chinese) · [AstrBot plugin](#astrbot) · [Native DSH plugin](#deepseek-harness-dsh)
+[中文](README.md) · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · [IndexTTS integration](docs/indextts.md) (Chinese) · [GPU support](docs/gpu-support.md) (Chinese) · [vs. llama-swap / berth](docs/comparison.md) (Chinese) · [AstrBot plugin](#astrbot) · [Native DSH plugin](#deepseek-harness-dsh)
 
 ```text
 LLM resident, 4.9 GB / 12 GB used
@@ -82,6 +82,29 @@ process stop/start, and a cross-process lock. What it deliberately does not do:
 multi-GPU, games/VMs, priority queues, a gateway, `nvidia-smi` polling, or
 automatic provider switching. See the
 [detailed comparison](docs/comparison.md) (Chinese).
+
+## GPU support (NVIDIA / AMD)
+
+The coordinator is vendor-agnostic: no CUDA, ROCm or `nvidia-smi` calls. It only
+looks at processes, command lines, ports and flag files. The three services are
+the part that cares about the card.
+
+| Component | NVIDIA Windows | AMD Windows | AMD Linux |
+|---|---|---|---|
+| Coordinator | ✅ production-tested | ⚠️ mechanism works, untested | ⚠️ basic support |
+| llama.cpp | ✅ CUDA | ⚠️ Vulkan (common) | ⚠️ ROCm / Vulkan |
+| ComfyUI | ✅ CUDA | ⚠️ DirectML / ZLUDA | ⚠️ ROCm (more mature) |
+| IndexTTS | ✅ CUDA | ⚠️ the hard part | ⚠️ ROCm, needs testing |
+
+NVIDIA Windows is the tested path. AMD works at the orchestration layer, but
+**IndexTTS on Windows AMD is the bottleneck** (PyTorch ROCm wheel coverage is
+limited). llama.cpp via Vulkan is usually fine; ComfyUI via DirectML or ZLUDA
+runs with node-compatibility and performance costs.
+
+For AMD profiles: use `ready.type: "port"`, give longer timeouts, raise
+`recovery_wait_seconds`, and adjust `process_names` / `cmdline_any` to the actual
+build. Full matrix and checklist: [`docs/gpu-support.md`](docs/gpu-support.md)
+(Chinese).
 
 ## Quick start
 
@@ -257,6 +280,7 @@ a GPU"; it was "let her chat, speak and send a selfie on a single 12 GB card".
 ## Limits
 
 - Windows first. Linux has basic `ps`/`kill` support but process names differ.
+- NVIDIA is the tested path; AMD/Intel orchestration works, but the service backends differ — see [GPU support](docs/gpu-support.md).
 - No `nvidia-smi` polling: readiness comes from processes, ports and flag files,
   which is predictable and driver-independent.
 - TTS needs the busy/ready flag protocol; other engines need a thin adapter.

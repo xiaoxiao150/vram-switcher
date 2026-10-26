@@ -1,6 +1,6 @@
 # VRAM Switcher
 
-**[English](README.en.md)** · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · [IndexTTS 集成](docs/indextts.md) · [和 llama-swap / berth 的区别](docs/comparison.md)
+**[English](README.en.md)** · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · [IndexTTS 集成](docs/indextts.md) · [GPU 兼容性](docs/gpu-support.md) · [和 llama-swap / berth 的区别](docs/comparison.md)
 
 **为本地 AI 情感陪伴（AstrBot / DeepSeek Harness）原生接入的 GPU 调度器 —— 让人设对话、IndexTTS 语音和自拍/改图在同一张 12 GB 卡上轮流用卡。**
 
@@ -90,6 +90,21 @@ await service.release("selfie")                   # 停 ComfyUI、恢复 LLM
 ```
 
 语音侧仍建议走 `tts_busy.flag` / `tts_ready.flag`，因为只有 TTS 插件知道合成什么时候真正结束。
+
+## GPU 兼容性（NVIDIA / AMD）
+
+调度器本身不挑卡：没有 CUDA / ROCm / `nvidia-smi` 依赖，只看进程、命令行、端口和 flag。挑卡的是它调度的三个服务。
+
+| 组件 | N 卡 Windows | A 卡 Windows | A 卡 Linux |
+|---|---|---|---|
+| 调度器 | ✅ 生产验证 | ⚠️ 机制可用，未实测 | ⚠️ 基础支持 |
+| llama.cpp | ✅ CUDA | ⚠️ Vulkan（社区常用） | ⚠️ ROCm / Vulkan |
+| ComfyUI | ✅ CUDA | ⚠️ DirectML / ZLUDA | ⚠️ ROCm |
+| IndexTTS | ✅ CUDA | ⚠️ 最易卡住 | ⚠️ ROCm 需实测 |
+
+一句话：**N 卡是已验证路径；A 卡的调度层可用，但 IndexTTS 在 Windows A 卡上最容易卡住**（PyTorch 的 ROCm 轮子覆盖有限）。llama.cpp 用 Vulkan 基本没问题；ComfyUI 走 DirectML/ZLUDA 能跑，但有节点兼容性和性能代价。
+
+A 卡 profile 的关键调整：`ready.type` 用 `port`、超时给足、`recovery_wait_seconds` 加大、`process_names` / `cmdline_any` 按实际构建改。完整矩阵、逐组件说明和检查清单见 [`docs/gpu-support.md`](docs/gpu-support.md)。
 
 ## 快速开始
 
@@ -419,6 +434,7 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
 ## 已知限制
 
 - Windows 优先；Linux 有基本的 `ps`/`kill` 支持，但进程名和启动器差异需要自行适配。
+- NVIDIA 是生产验证路径；A 卡/Intel 的调度层可用，但三个服务的后端支持差异很大，见 [GPU 兼容性](docs/gpu-support.md)。
 - 不读取 `nvidia-smi` 显存数值；显存是否释放由进程/端口/标志文件推断。这样更可预测，也避免驱动差异。
 - TTS 必须实现 busy/ready 文件协议；其它 TTS 可以自己写一个薄适配器。
 - ComfyUI 队列接口默认为 `/queue`；其它图像服务可以在 profile 里改 `queue.url`，或设为不可用。

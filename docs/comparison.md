@@ -78,4 +78,5 @@ berth 是这个方向里范围最大的项目：租约、优先级、ComfyUI job
 - 不做 provider 自动切换；交给 AstrBot 的 fallback 链。
 - TTS 必须实现 busy/ready 协议；没有适配器的 TTS 只能手动或换方案。
 - Windows 优先；Linux 只有基础 `ps`/`kill` 支持。
+- NVIDIA 是生产验证路径；A 卡/Intel 的调度层可用，但服务后端差异很大，见 [`gpu-support.md`](gpu-support.md)。
 - 不是“装完就自动识别一切”；`configure.py` 只负责生成初稿，路径和端口仍要人确认。

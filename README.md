@@ -287,9 +287,13 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
   # AstrBot
   git clone https://github.com/xiaoxiao150/vram-switcher     AstrBot/data/plugins/astrbot_plugin_vram_switcher
 
-  # DSH（源码安装）
+  # DSH（源码安装；包名 dsh-vram-switcher）
   dsh plugin --profile web add github:xiaoxiao150/vram-switcher
   ```
+
+> 仓库名是 `vram-switcher`，但 AstrBot 会把插件安装到
+> `data/plugins/astrbot_plugin_vram_switcher/`（取自 `metadata.yaml` 的 `name`），
+> 两者不一致是正常的。
 
 发布信息：[v2.0.0 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.0)。
 

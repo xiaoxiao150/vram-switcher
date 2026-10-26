@@ -1,0 +1,37 @@
+name: Marketplace submission
+description: Track publishing this plugin to the AstrBot and DSH markets
+labels: ["market"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## AstrBot 插件市场（cloud.astrbot.app）
+
+        需要作者本人用 GitHub 账号登录 https://cloud.astrbot.app/publish 提交仓库：
+        - 仓库：https://github.com/xiaoxiao150/vram-switcher
+        - 根目录 `metadata.yaml` 已含 `name/display_name/desc/version/author/repo`
+        - 打包体积约 226 KB，远低于 16 MB 上限
+
+        ## DSH 插件市场（awesome-dsh-plugin）
+
+        需要向 https://github.com/awesome-dsh-plugin/awesome-dsh-plugin 提交 PR，
+        新增 `data/plugins/xiaoxiao150__vram-switcher.yml`：
+
+        ```yaml
+        url: https://github.com/xiaoxiao150/vram-switcher
+        name: xiaoxiao150/vram-switcher
+        category: tools
+        description:
+          en: Coordinates local LLM, TTS and ComfyUI GPU workloads for AstrBot and DeepSeek Harness.
+          zh: 为 AstrBot 与 DeepSeek Harness 协调本地 LLM、TTS 和 ComfyUI 的 GPU 任务。
+        ```
+
+        同时需要在 GitHub 仓库设置里添加 topic：`dsh-plugin`。
+  - type: checkboxes
+    attributes:
+      label: 完成项
+      options:
+        - label: 已在 cloud.astrbot.app 提交 AstrBot 插件
+        - label: 已添加 `dsh-plugin` topic
+        - label: 已向 awesome-dsh-plugin 提交 PR
+        - label: 已在 npm 发布 `dsh-vram-switcher`

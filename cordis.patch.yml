@@ -3,7 +3,7 @@
 
 - insert:
     - id: vram-switcher
-      name: './index.js'
+      name: './dsh-plugin/index.js'
       config:
         enabled: true
         profilePath: ''

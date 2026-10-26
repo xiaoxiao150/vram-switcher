@@ -232,7 +232,7 @@ DSH Cordis -> dsh-plugin/index.js -> ctx.tools.register(...)
                               └─ Python daemon.py -> vram_switcher.Orchestrator
 ```
 
-- `package.json` 的 `dsh.bundle.patch` 指向 `dsh-plugin/cordis.patch.yml`
+- `package.json` 的 `dsh.bundle.patch` 指向仓库根的 `cordis.patch.yml`
 - `dsh-plugin.json` 是 DSH manifest v0.15
 - 原生工具：`vram_status` / `vram_acquire` / `vram_release`
 - DSH 加载时启动一个长驻 Python daemon，复用 AstrBot 的同一套核心和锁

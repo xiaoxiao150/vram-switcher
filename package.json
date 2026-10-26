@@ -6,12 +6,13 @@
   "main": "dsh-plugin/index.js",
   "exports": {
     ".": "./dsh-plugin/index.js",
-    "./cordis.patch.yml": "./dsh-plugin/cordis.patch.yml",
+    "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
   "files": [
     "dsh-plugin",
     "vram_switcher",
+    "cordis.patch.yml",
     "profile.example.json",
     "README.md",
     "LICENSE",
@@ -42,7 +43,7 @@
   },
   "dsh": {
     "bundle": {
-      "patch": "./dsh-plugin/cordis.patch.yml"
+      "patch": "./cordis.patch.yml"
     }
   },
   "repository": {

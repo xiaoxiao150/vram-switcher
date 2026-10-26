@@ -4,11 +4,11 @@ This repository is also a native DSH Cordis plugin package:
 
 ```text
 dsh-vram-switcher (npm package)
-  package.json                 dsh.bundle.patch -> dsh-plugin/cordis.patch.yml
+  package.json                 dsh.bundle.patch -> ./cordis.patch.yml
   dsh-plugin.json              DSH manifest v0.15
+  cordis.patch.yml             bundle patch (inserts ./dsh-plugin/index.js)
   dsh-plugin/
     index.js                   Cordis host entry; ctx.tools.register(...)
-    cordis.patch.yml           bundle patch (inserts ./index.js)
     daemon.py                  long-lived Python coordinator
   vram_switcher/               shared core (also used by AstrBot/MCP)
 ```

@@ -30,10 +30,10 @@
   ],
   "license": "MIT",
   "engines": {
-    "dsh": ">=0.2.0-rc.2"
+    "dsh": ">=0.2.0-rc.2 || >=0.2.1-rc.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.4"
+    "@deepseek-ai/cordis": ">4.0.4-0 <5 || >=4.1.0-rc.0 <5"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/cordis": {

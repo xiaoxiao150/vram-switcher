@@ -287,7 +287,7 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
   # AstrBot
   git clone https://github.com/xiaoxiao150/vram-switcher     AstrBot/data/plugins/astrbot_plugin_vram_switcher
 
-  # DSH
+  # DSH（源码安装）
   dsh plugin --profile web add github:xiaoxiao150/vram-switcher
   ```
 

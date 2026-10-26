@@ -1,6 +1,6 @@
 {
   "name": "dsh-vram-switcher",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Native DSH Cordis plugin for coordinating local LLM, TTS and ComfyUI GPU workloads.",
   "type": "module",
   "main": "dsh-plugin/index.js",
@@ -10,11 +10,14 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dsh-plugin",
-    "vram_switcher",
+    "dsh-plugin/index.js",
+    "dsh-plugin/daemon.py",
+    "vram_switcher/*.py",
     "cordis.patch.yml",
+    "configure.py",
     "profile.example.json",
     "README.md",
+    "README.en.md",
     "LICENSE",
     "CHANGELOG.md",
     "dsh-plugin.json"

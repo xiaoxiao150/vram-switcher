@@ -2,7 +2,7 @@ name: astrbot_plugin_vram_switcher
 display_name: VRAM Switcher
 author: vram-switcher contributors
 desc: 本地 GPU 任务协调器：LLM / TTS / 生图服务按需让出显存，完成后恢复。
-version: 2.0.1
+version: 2.0.2
 category: 工具
 tags:
   - vram

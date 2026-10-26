@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.2
+
+- Add `configure.py`: detects a running llama-server / TTS webui / ComfyUI,
+  falls back to scanning `--root` directories, and writes a valid
+  `profile.local.json`. Nothing is started or stopped.
+- Add `README.en.md` and a shorter, benefit-first top section to `README.md`.
+- 7 new tests for `configure.py` (pure-JSON `--dry-run`, `--force` backup,
+  refusal to overwrite, generated profile accepted by the real loader).
+- npm package now ships `configure.py` and `README.en.md`, and contains no
+  `__pycache__` files.
+
 ## 2.0.1
 
 - Move the DSH bundle patch to the repository root (`cordis.patch.yml`), matching

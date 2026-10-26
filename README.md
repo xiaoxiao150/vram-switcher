@@ -1,77 +1,104 @@
 # VRAM Switcher
 
-A configurable local-GPU task coordinator for AstrBot.
+**[English](README.en.md)** · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · AstrBot / DeepSeek Harness
 
-当一张显卡同时要跑本地 LLM、TTS 和 ComfyUI 时，显存往往不够。VRAM Switcher 在任务开始前停掉当前不需要的服务，在任务结束后按配置把本地 LLM 拉回来，并可选地保留 TTS 服务待命。
+**让一张 12 GB 显卡同时跑本地 LLM、TTS 和 ComfyUI —— 不 OOM、不 30 秒一步、不用手动杀进程。**
 
-It is deliberately **not** tied to a particular model or vendor. Processes, ports, start commands and flag files all live in a profile.
+```text
+LLM 常驻，显存 4.9 GB / 12 GB
+        │
+        ├── "/aimg 一只猫" ──► 停 LLM ──► 起 ComfyUI ──► 出图 ──► 等队列跑空
+        │                              (腾出 ~6 GB)             停 ComfyUI
+        │                                                        拉起 LLM
+        └── 语音请求 ──────► 停 LLM ──► 确保 TTS 在线 ──► 合成 ──► 拉起 LLM
+```
 
-## 它解决什么问题
+它只负责这些「停/起」的**顺序**。不是模型、不是路由、也不是要你重写的启动器：所有机器相关的参数都在一个 JSON profile 里。
 
-典型场景：12GB 显卡上同时存在：
+## 为什么需要它
 
-- 本地 LLM（llama.cpp / llama-server）
-- IndexTTS 或其它 TTS webui
-- ComfyUI + SD/Flux 模型
+12 GB 卡上通常是这样：
 
-三者同时驻留会触发 Windows 显存换页，表现为预填从几百 tok/s 掉到个位数、生图一张几分钟、甚至整台机器卡死。VRAM Switcher 用一个很小的状态机做互斥：
+| 服务 | 常驻显存 |
+|---|---|
+| `llama-server`（Qwen3.6-35B-A3B MoE，256K 上下文） | ~4.9 GB |
+| IndexTTS webui | ~2.3–5.3 GB |
+| ComfyUI + SD/Flux | ~6–7 GB |
+| 桌面 + 宿主程序 | ~2 GB |
+
+前三个里任意两个加桌面就会溢出。Windows 不会当场报错，而是开始把显存换页到内存——**这不会崩，只会慢 100 倍**。在写下它的那台机器上实测：`s2mel` 扩散从 **0.12 s/步 变成 30 s/步**，一张图跑了 **543 秒**，预填从 ~1300 tok/s 掉到 **0.2 tok/s**。进程一直是活的。
+
+解法不是换更大的卡，而是确保关键时刻只有一个在占显存。
+
+## 它做什么
+
+- 任务前**停掉不需要的**、**拉起需要的**，结束后再放回去。
+- **真的等就绪**：ComfyUI 必须 8188 在 listen，而不是进程刚起（早 1 秒连接曾让每次自拍都失败）；一批图会先等 `/queue` 跑空再停服务。
+- **只动你列出的东西**：进程名 + 命令行过滤 + 可选端口白名单，没有“杀掉所有 python.exe”这条路。
+- **跨进程串行**：AstrBot 插件和 DSH 插件共用 `coordinator.lock`，语音事件和生图任务不会同时切服务。
+- **一套核心，两个宿主**：AstrBot（Python 插件）与 DeepSeek Harness（原生 Cordis 插件 + 小 Python daemon）。另带 MCP stdio 服务，可给 Claude Desktop / Codex 用。
+
+## 快速开始
+
+```bash
+git clone https://github.com/xiaoxiao150/vram-switcher
+cd vram-switcher
+
+# 自动探测正在运行的 llama-server / TTS webui / ComfyUI，生成 profile。
+# 这一步不会启动或停止任何进程。
+python configure.py --root D:/AI        # 只看不写加 --dry-run
+```
+
+`configure.py` 会写出 `profile.local.json`，并打印它找到了什么：
+
+```text
+[detected] llm: running process
+[detected] tts: running process
+[missing ] image: fill this in by hand
+[port    ] 8080 (llm) listening
+[port    ] 7860 (tts) listening
+[port    ] 8188 (image) free
+```
+
+把宿主指向这个文件并重启即可。没探测到的服务会写成 `enabled: false`，插件仍然合法，只是少做一件事。
+
+## 状态机
 
 ```text
 LLM 常驻
-  ├─ 收到 TTS 请求 → 停 LLM（可停辅助服务）→ 确保 TTS 在线 → 完成后恢复 LLM
-  └─ 收到生图请求 → 停 LLM（可停 TTS/辅助服务）→ 启动图像服务 → 等就绪
-       → 生图完成后先等队列跑空 → 停图像服务 → 恢复 LLM
+  ├─ TTS 请求 → 停 LLM（可停辅助服务）→ 确保 TTS 在线 → 完成后恢复 LLM
+  └─ 生图请求 → 停 LLM（可停 TTS/辅助服务）→ 启动图像服务 → 等就绪
+       → 出图完成 → 等队列跑空 → 停图像服务 → 恢复 LLM
 ```
-
-它只操作**配置里明确列出的服务**，不会按“所有 python.exe”或“所有 llama 进程”无差别杀进程。
 
 ## 特性
 
 - 配置驱动：路径、端口、进程名、启动命令、日志、超时全部在 `profile.local.json`
-- 三类服务：`llm` / `tts` / `image`，以及任意数量的 `aux_services`
-- LLM 引擎 profile：例如 `moe`、`dense27b`，由 `local_llm_engine` 选择
-- TTS 版本 profile：例如 `2.5` / `2.0`，支持 `auto` 跟随当前运行版本
+- 三类服务：`llm` / `tts` / `image`，外加任意数量的只停不启 `aux_services`
+- 引擎 / 版本 profile：多个 LLM 引擎（如 `moe`、`dense27b`）、多个 TTS 版本（`2.5` / `2.0`，支持 `auto`）
 - TTS 文件协议：`tts_busy.flag` 表示合成中，`tts_ready.flag` 表示显存已就绪
-- 生图队列：恢复前轮询 ComfyUI `/queue`，避免打断一批多张图
-- 夜间静默：23:00–07:00 默认不重新拉起本地 LLM（可配置）
-- 安全边界：进程名 + 命令行子串 + 端口白名单；排除自身与父进程
-- 兼容层：保留 `_prepare_switch`、`_recover_after_tts`、事件标记和 flag 路径，原 AstrBot 生态插件无需改动
-- 默认不切 provider：provider 选择交给 AstrBot 的 fallback 链，避免与 `default_provider_id` 打架
-- 原生 DSH Cordis 插件：`ctx.tools.register` 暴露 `vram_status` / `vram_acquire` / `vram_release`
-- MCP 备用入口：`mcp_server.py` 供 Claude Desktop、Codex 等宿主使用
-- 跨进程协调锁：AstrBot 和 DSH 共用 `coordinator.lock`，避免同时切换同一组服务
+- 生图队列：恢复前轮询 ComfyUI `/queue`，不打断一批多张图
+- 夜间静默：默认 23:00–07:00 不重新拉起本地 LLM
+- 兼容层：`_prepare_switch`、`_recover_after_tts`、事件标记、flag 路径全部保留
+- 默认不切 provider：交给 AstrBot 的 fallback 链，避免与 `default_provider_id` 打架
+- 原生 DSH Cordis 插件 + MCP 备用入口 + 跨进程协调锁
 
-## 安装
+## AstrBot 安装
 
-1. 把本目录放到：
+```bash
+git clone https://github.com/xiaoxiao150/vram-switcher   AstrBot/data/plugins/astrbot_plugin_vram_switcher
+```
 
-   ```text
-   AstrBot/data/plugins/astrbot_plugin_vram_switcher
-   ```
+也可以直接从插件市场安装：搜 **VRAM Switcher**（[cloud.astrbot.app](https://cloud.astrbot.app/)）。
 
-2. 复制 profile：
+然后在插件配置里确认：
 
-   ```text
-   profile.example.json -> profile.local.json
-   ```
+- `profile_path` = 你生成的 `profile.local.json`（建议放
+  `AstrBot/data/plugin_data/astrbot_plugin_vram_switcher/`，填绝对路径）
+- `local_llm_engine` = profile 里的引擎键（用 `configure.py` 生成时是 `detected`）
+- `index_tts_version` = `auto` 或 `2.5` / `2.0`
 
-3. 编辑 `profile.local.json`，至少填好：
-
-   - `services.llm.start.profiles.<engine>.args/cwd`
-   - `services.tts.versions.<version>.args/cwd`（如果不用 TTS 可 `enabled: false`）
-   - `services.image.start.args/cwd`（如果不用生图可 `enabled: false`）
-   - 各服务的 `port`、`process_names`
-
-   建议把 `profile.local.json` 放在 `AstrBot/data/plugin_data/astrbot_plugin_vram_switcher/`，再把插件配置里的 `profile_path` 填成绝对路径；这样源码目录里不会残留本机路径。
-
-4. 重启 AstrBot。
-
-5. 在 AstrBot 插件配置里确认：
-
-   - `profile_path` = `profile.local.json`
-   - `local_llm_engine` = profile 里的引擎键，例如 `moe`
-   - `index_tts_version` = `auto` 或 `2.5` / `2.0`
-
+没跑过 `configure.py` 的话，也可以从 `profile.example.json` 手动复制一份改。
 如果 profile 找不到或 JSON 非法，插件会记录错误并保持禁用，不会崩溃或乱杀进程。
 
 ## Profile 参考
@@ -255,17 +282,9 @@ Cordis 插件的宿主使用；不要和原生插件同时加载，避免重复�
 python -m unittest discover -s tests -v
 ```
 
-测试使用 FakeSystem，不会启动/停止真实进程，也不需要 GPU。
+测试使用 FakeSystem，不会启动/停止真实进程，也不需要 GPU；`tests/test_configure.py` 会验证 `configure.py --dry-run` 只输出 JSON、拒绝覆盖已有文件，并确认生成的 profile 能被真实 loader 接受。
 
 CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 / 3.11 / 3.12 上跑单元测试。
-
-## 安全说明
-
-- 只操作 profile 中明确配置的进程名/命令行/端口；没有“按进程名通配杀所有”的默认行为。
-- 自动排除当前 Python 进程及其父进程。
-- `stop_by_port` 和 `tree` 默认关闭；只有明确配置时才启用。
-- `start_service` 只执行 profile 里的参数数组，不经过 shell 字符串拼接。
-- 不要把 API key、Cookie、个人绝对路径提交到公开仓库；`profile.local.json` 已加入 `.gitignore`。
 
 ## 已知限制
 
@@ -277,17 +296,17 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
 
 ## 在市场里安装
 
-- **AstrBot**：在 AstrBot WebUI → 插件市场 搜索 **VRAM Switcher**，或
-  [cloud.astrbot.app](https://cloud.astrbot.app/) 搜索仓库 `xiaoxiao150/vram-switcher`。
-- **DSH**：在 DSH 插件市场搜索 **vram-switcher**（来自
-  [awesome-dsh-plugin](https://awesome-dsh-plugin.com/p/xiaoxiao150/vram-switcher/)）。
-- 也可以直接从源码安装：
+- **AstrBot**：WebUI → 插件市场 搜 **VRAM Switcher**，或
+  [cloud.astrbot.app](https://cloud.astrbot.app/) 搜仓库 `xiaoxiao150/vram-switcher`。
+- **DSH**：插件市场搜 **vram-switcher**
+  （[awesome-dsh-plugin](https://awesome-dsh-plugin.com/p/xiaoxiao150/vram-switcher/)）。
+- 源码安装：
 
   ```bash
   # AstrBot
   git clone https://github.com/xiaoxiao150/vram-switcher     AstrBot/data/plugins/astrbot_plugin_vram_switcher
 
-  # DSH（源码安装；包名 dsh-vram-switcher）
+  # DSH（包名 dsh-vram-switcher）
   dsh plugin --profile web add github:xiaoxiao150/vram-switcher
   ```
 
@@ -295,9 +314,18 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
 > `data/plugins/astrbot_plugin_vram_switcher/`（取自 `metadata.yaml` 的 `name`），
 > 两者不一致是正常的。
 
-上架进度与剩余手工步骤见 [`MARKET_SUBMIT.md`](MARKET_SUBMIT.md)。
+发布信息：[v2.0.2 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.2)。
 
-发布信息：[v2.0.1 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.1)。
+## 安全模型
+
+| 风险 | 处理 |
+|---|---|
+| 杀错进程 | 进程名 **且** 命令行过滤，可选端口白名单；没有裸名字匹配 |
+| 杀到自己 | 排除当前 PID 与父 PID |
+| Shell 注入 | `start` 是 argv 数组，`shell=False` 执行 |
+| 两个宿主打架 | `coordinator.lock` 覆盖整个 acquire → release 窗口 |
+| 配置写错 | 加载时校验；非法 profile 只禁用插件并记录原因，不猜 |
+| 路径泄漏 | `profile.local.json` 已 git-ignore；示例里没有真实路径 |
 
 ## License
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.3
+
+- Reposition the project around local AI companions on AstrBot / DeepSeek
+  Harness: persona chat (LLM) + IndexTTS voice + ComfyUI selfies on one GPU.
+- Add `docs/indextts.md`: the busy/ready flag contract, a copy-paste adapter,
+  AstrBot hook priorities, dual 2.0/2.5 versions and troubleshooting.
+- Add `docs/comparison.md`: an honest comparison with llama-swap, berth and
+  vhotseat, including when *not* to use this project.
+- README/README.en: companion-focused intro, "who it is for", and a history
+  section covering the August 2026 origin and the September production incident.
+- npm package ships `docs/`; metadata and keywords now mention AstrBot, DSH,
+  IndexTTS and AI companions.
+
 ## 2.0.2
 
 - Add `configure.py`: detects a running llama-server / TTS webui / ComfyUI,

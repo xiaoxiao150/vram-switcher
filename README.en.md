@@ -1,8 +1,8 @@
 # VRAM Switcher
 
-**Run a local LLM, a TTS webui and ComfyUI on one 12 GB GPU — without OOM, without 30-second diffusion steps, without juggling processes by hand.**
+**Native GPU coordination for local AI companions on AstrBot / DeepSeek Harness — persona chat, IndexTTS voice and ComfyUI selfies taking turns on one 12 GB card.**
 
-[中文](README.md) · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · [AstrBot plugin](#astrbot) · [Native DSH plugin](#deepseek-harness-dsh)
+[中文](README.md) · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · [IndexTTS integration](docs/indextts.md) (Chinese) · [vs. llama-swap / berth](docs/comparison.md) (Chinese) · [AstrBot plugin](#astrbot) · [Native DSH plugin](#deepseek-harness-dsh)
 
 ```text
 LLM resident, 4.9 GB / 12 GB used
@@ -38,6 +38,11 @@ whole time.
 The fix is not a bigger GPU. It is making sure only one of them is resident when
 it matters.
 
+This was written for a local AI companion: she needs persona continuity (local
+LLM), voice replies (IndexTTS), and selfies/edits (ComfyUI), often in the same
+turn. A generic GPU broker does not know when a voice clip has actually finished
+synthesizing; for a companion that boundary is the whole point.
+
 ## What it does
 
 - **Stops what is not needed** before a task, **starts what is** — then puts it back.
@@ -52,6 +57,31 @@ it matters.
 - **Works for two hosts from one core**: AstrBot (Python plugin) and DeepSeek
   Harness (native Cordis plugin + a small Python daemon). An MCP stdio server is
   included for Claude Desktop / Codex and friends.
+
+## Who it is for
+
+GPU arbitration is already crowded: [llama-swap](https://github.com/mostlygeek/llama-swap)
+has 6.1k stars, [berth](https://github.com/T-Crypt/berth) reached 200 stars after
+its October 11, 2026 debut, and vhotseat / OneGPU4All cover nearby cases. This
+project does not pretend to be a general scheduler. It solves one specific
+setup:
+
+> **You run a local AI companion on AstrBot or DSH: persona chat (local LLM) +
+> IndexTTS voice + ComfyUI selfies, all on one 12 GB card.**
+
+| Your situation | Better fit |
+|---|---|
+| Only swapping llama.cpp / vLLM models, clients can change `base_url` | [llama-swap](https://github.com/mostlygeek/llama-swap) |
+| General GPU leases, priorities, games/VMs/multi-GPU | [berth](https://github.com/T-Crypt/berth) (alpha, Windows experimental) |
+| Linux LLM ↔ ComfyUI turn-taking | [vhotseat](https://github.com/wandermyz/vhotseat) |
+| **AstrBot / DSH companion stack, no proxy, switch only when TTS really finishes** | **this project** |
+
+What it adds over a generic broker: the five AstrBot event hooks, three native
+DSH tools, the IndexTTS `tts_busy.flag` / `tts_ready.flag` protocol, real
+process stop/start, and a cross-process lock. What it deliberately does not do:
+multi-GPU, games/VMs, priority queues, a gateway, `nvidia-smi` polling, or
+automatic provider switching. See the
+[detailed comparison](docs/comparison.md) (Chinese).
 
 ## Quick start
 
@@ -93,6 +123,33 @@ Compatibility hooks used by other AstrBot companion plugins
 (`_prepare_switch`, `_recover_after_tts`, `on_decorating_result`,
 `_vram_switcher_*` event extras, `tts_busy.flag` / `tts_ready.flag`) are
 preserved, so existing setups keep working.
+
+### IndexTTS: why this stops the process
+
+IndexTTS webui has no "unload model" endpoint. Resident it takes 2.3–5.3 GB; the
+local LLM takes 4.9 GB; ComfyUI takes 6–7 GB. On a 12 GB card they cannot
+coexist, so the TTS side has to give the card back before synthesis and take it
+again afterwards.
+
+The handoff uses two files:
+
+1. The TTS plugin writes `tts_busy.flag` (and removes a stale `tts_ready.flag`)
+   **before** submitting a job.
+2. VRAM Switcher stops the LLM, brings the TTS webui online if needed, waits for
+   the port to listen, then writes `tts_ready.flag`.
+3. The TTS plugin waits for `ready` **and** an open port before submitting.
+4. On success or failure the TTS plugin removes `busy` in `finally`; VRAM
+   Switcher restores the LLM.
+
+Do not write `ready` early: if synthesis starts while the LLM still holds VRAM,
+Windows pages the `s2mel` weights and a step goes from **0.12 s to 30 s**.
+IndexTTS cold start is about 60 s, so allow at least 150 s. A busy flag older
+than 900 s is treated as a crash leftover.
+
+The full adapter, profile, AstrBot hook priorities and troubleshooting are in
+[`docs/indextts.md`](docs/indextts.md) (Chinese, with copy-paste code). The
+repository provides the scheduler side; your TTS plugin must implement the flag
+contract.
 
 ### DeepSeek Harness (DSH)
 
@@ -176,6 +233,26 @@ python -m unittest discover -s tests -v     # 36 tests, no GPU, no real processe
 
 CI runs on Python 3.10–3.12, validates the DSH manifest against the official
 schema, and checks that the published npm tarball contains no caches or tests.
+
+## History
+
+- **2026-08**: the first version was written inside a local AI companion
+  project. She chatted through a local LLM, spoke through IndexTTS, and sent
+  selfies through ComfyUI; the only way to switch was to kill processes by hand,
+  which regularly killed the reply that was being generated.
+- **2026-09-28**: a selfie request hit a ComfyUI cold start (the wait window was
+  120 s at the time), the plugin assumed it was not ready, and the request fell
+  through to a cloud node — a privacy incident. The readiness window became
+  300 s, and start/stop became an explicit state machine.
+- **2026-10**: rewritten as the profile-driven 2.0 core, with native AstrBot and
+  DSH adapters, then open-sourced.
+- **2026-10-26**: public repository. The code had already been running on one
+  12 GB machine for more than two months.
+
+Public date is not start date. This history is here because, for the "who was
+first" question, the earliest production log is more convincing than the
+repository creation date — and because the first requirement was never "schedule
+a GPU"; it was "let her chat, speak and send a selfie on a single 12 GB card".
 
 ## Limits
 

@@ -20,7 +20,7 @@ from vram_switcher import load_config
 from vram_switcher.service import VramService
 
 SERVER_NAME = "vram-switcher"
-SERVER_VERSION = "2.0.2"
+SERVER_VERSION = "2.0.3"
 PROTOCOL_VERSION = "2024-11-05"
 
 TOOLS: list[dict[str, Any]] = [

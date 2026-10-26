@@ -1,8 +1,8 @@
 name: astrbot_plugin_vram_switcher
 display_name: VRAM Switcher
 author: vram-switcher contributors
-desc: 本地 GPU 任务协调器：LLM / TTS / 生图服务按需让出显存，完成后恢复。
-version: 2.0.2
+desc: 为本地 AI 陪伴 / AstrBot / DSH 协调 LLM、IndexTTS 与 ComfyUI 的显存，按需停启。
+version: 2.0.3
 category: 工具
 tags:
   - vram
@@ -10,6 +10,9 @@ tags:
   - llama.cpp
   - comfyui
   - tts
+  - indextts
   - astrbot
+  - dsh
+  - ai-companion
 repo: https://github.com/xiaoxiao150/vram-switcher
-short_desc: 本地 LLM / TTS / ComfyUI 显存协调，支持 AstrBot 与 DSH 原生插件。
+short_desc: AI 陪伴 / AstrBot / DSH 原生显存调度：LLM、IndexTTS、ComfyUI 轮流用卡。

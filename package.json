@@ -1,7 +1,7 @@
 {
   "name": "dsh-vram-switcher",
-  "version": "2.0.2",
-  "description": "Native DSH Cordis plugin for coordinating local LLM, TTS and ComfyUI GPU workloads.",
+  "version": "2.0.3",
+  "description": "Native DSH Cordis plugin + AstrBot adapter for local AI companions: coordinate LLM, IndexTTS and ComfyUI on one GPU.",
   "type": "module",
   "main": "dsh-plugin/index.js",
   "exports": {
@@ -16,6 +16,7 @@
     "cordis.patch.yml",
     "configure.py",
     "profile.example.json",
+    "docs",
     "README.md",
     "README.en.md",
     "LICENSE",
@@ -26,11 +27,16 @@
     "dsh",
     "dsh-plugin",
     "deepseek-harness",
+    "astrbot",
+    "astrbot-plugin",
+    "indextts",
+    "ai-companion",
     "vram",
     "gpu",
     "comfyui",
     "tts",
-    "llama.cpp"
+    "llama.cpp",
+    "windows"
   ],
   "license": "MIT",
   "engines": {

@@ -1,8 +1,12 @@
 # VRAM Switcher
 
-**[English](README.en.md)** · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · AstrBot / DeepSeek Harness
+**[English](README.en.md)** · [Releases](https://github.com/xiaoxiao150/vram-switcher/releases) · [IndexTTS 集成](docs/indextts.md) · [和 llama-swap / berth 的区别](docs/comparison.md)
 
-**让一张 12 GB 显卡同时跑本地 LLM、TTS 和 ComfyUI —— 不 OOM、不 30 秒一步、不用手动杀进程。**
+**为本地 AI 情感陪伴（AstrBot / DeepSeek Harness）原生接入的 GPU 调度器 —— 让人设对话、IndexTTS 语音和自拍/改图在同一张 12 GB 卡上轮流用卡。**
+
+它不是通用 GPU 租约系统：不换客户端、不加代理、不读 `nvidia-smi`，只在宿主的事件边界上停/起你明确列出的进程。
+
+在 12 GB 卡上，它把本地 LLM、IndexTTS 和 ComfyUI 从「互相换页」变成「轮流独占」——实测 `s2mel` 从 **30 s/步回到 0.12 s/步**，预填从 **0.2 tok/s 回到 ~1300 tok/s**。
 
 ```text
 LLM 常驻，显存 4.9 GB / 12 GB
@@ -28,6 +32,8 @@ LLM 常驻，显存 4.9 GB / 12 GB
 
 前三个里任意两个加桌面就会溢出。Windows 不会当场报错，而是开始把显存换页到内存——**这不会崩，只会慢 100 倍**。在写下它的那台机器上实测：`s2mel` 扩散从 **0.12 s/步 变成 30 s/步**，一张图跑了 **543 秒**，预填从 ~1300 tok/s 掉到 **0.2 tok/s**。进程一直是活的。
 
+这套东西最初就是给一个本地 AI 陪伴机器人写的：她要有人设连续性（本地 LLM）、要能发语音（IndexTTS）、要能自拍和改图（ComfyUI），而且这些经常发生在同一个回合里。通用 GPU 调度器不知道一段语音什么时候真正合成完；对陪伴场景，那个边界恰恰是最重要的。
+
 解法不是换更大的卡，而是确保关键时刻只有一个在占显存。
 
 ## 它做什么
@@ -37,6 +43,37 @@ LLM 常驻，显存 4.9 GB / 12 GB
 - **只动你列出的东西**：进程名 + 命令行过滤 + 可选端口白名单，没有“杀掉所有 python.exe”这条路。
 - **跨进程串行**：AstrBot 插件和 DSH 插件共用 `coordinator.lock`，语音事件和生图任务不会同时切服务。
 - **一套核心，两个宿主**：AstrBot（Python 插件）与 DeepSeek Harness（原生 Cordis 插件 + 小 Python daemon）。另带 MCP stdio 服务，可给 Claude Desktop / Codex 用。
+
+## 适合谁
+
+显存协调已经不缺项目：[llama-swap](https://github.com/mostlygeek/llama-swap) 6.1k★，[berth](https://github.com/T-Crypt/berth) 2026-10-11 才公开、已 200★，vhotseat、OneGPU4All 也在做类似的事。这个项目不假装是通用调度器，它只解决一个具体问题：
+
+> **你在 AstrBot 或 DSH 上跑一个本地 AI 陪伴：人设对话（本地 LLM）+ IndexTTS 语音 + 自拍/改图（ComfyUI），全在同一张 12 GB 卡上。**
+
+一次回合里可能同时发生：
+
+```text
+用户消息
+  ├─ 她回复文字（LLM 占卡）
+  ├─ 回复带 [语音] → 停 LLM → IndexTTS 合成 → 恢复 LLM
+  └─ 调 generate_selfie → 停 LLM/TTS → ComfyUI 出图 → 恢复 LLM
+```
+
+| 你的情况 | 更合适的选择 |
+|---|---|
+| 只是 llama.cpp / vLLM 换模型，所有客户端都能改 base URL | [llama-swap](https://github.com/mostlygeek/llama-swap) |
+| 要通用 GPU 租约、优先级、游戏/VM/多卡仲裁 | [berth](https://github.com/T-Crypt/berth)（alpha，Windows 实验性） |
+| Linux 上 LLM ↔ ComfyUI 轮流 | [vhotseat](https://github.com/wandermyz/vhotseat) |
+| **在 AstrBot / DSH 上跑本地 AI 陪伴，不想改端口、不加代理，语音合成结束才切** | **本项目** |
+
+相对通用调度器，它**多做**这些：
+
+- AstrBot 的 5 个事件钩子：LLM 请求、回复装饰前后、工具调用前、工具返回后
+- DSH 原生 Cordis 工具：`vram_status` / `vram_acquire` / `vram_release`
+- IndexTTS 的 `tts_busy.flag` / `tts_ready.flag` 协议（合成边界，不是 HTTP 边界）
+- 真实进程停启：TTS 没有 unload API 也能让出显存
+
+也**少做**这些：多卡、游戏/VM、优先级队列、网关、`nvidia-smi` 轮询、provider 自动切换。需要这些就选上面的通用项目。
 
 ## 快速开始
 
@@ -77,6 +114,7 @@ LLM 常驻
 - 三类服务：`llm` / `tts` / `image`，外加任意数量的只停不启 `aux_services`
 - 引擎 / 版本 profile：多个 LLM 引擎（如 `moe`、`dense27b`）、多个 TTS 版本（`2.5` / `2.0`，支持 `auto`）
 - TTS 文件协议：`tts_busy.flag` 表示合成中，`tts_ready.flag` 表示显存已就绪
+- 为 AI 陪伴回合设计：文字回复 → 语音合成 → 自拍/改图可以在同一回合内安全切换
 - 生图队列：恢复前轮询 ComfyUI `/queue`，不打断一批多张图
 - 夜间静默：默认 23:00–07:00 不重新拉起本地 LLM
 - 兼容层：`_prepare_switch`、`_recover_after_tts`、事件标记、flag 路径全部保留
@@ -100,6 +138,73 @@ git clone https://github.com/xiaoxiao150/vram-switcher   AstrBot/data/plugins/as
 
 没跑过 `configure.py` 的话，也可以从 `profile.example.json` 手动复制一份改。
 如果 profile 找不到或 JSON 非法，插件会记录错误并保持禁用，不会崩溃或乱杀进程。
+
+## IndexTTS 集成：为什么必须停进程
+
+IndexTTS webui 没有“卸载模型”的 HTTP API。它常驻时占 2.3–5.3 GB；本地 LLM 占 4.9 GB；ComfyUI 出图要 6–7 GB。12 GB 卡上三者不能共存，只能让 TTS 在合成前把卡让出来，合成后再还回去。
+
+这里用的是**进程级互斥 + 两个文件**：
+
+```text
+AstrBot 决定发语音
+  │
+  ├─ TTS 插件写 tts_busy.flag（并删掉上一轮的 tts_ready.flag）
+  │
+  ▼
+VRAM Switcher（每 2 s 轮询）
+  ├─ 停本地 LLM（以及 profile 里的 aux_services）
+  ├─ 确保 IndexTTS webui 在线（没起就按 versions 启动，等端口 listen）
+  └─ 写 tts_ready.flag
+  │
+  ▼
+TTS 插件等到 ready + webui 在线，才提交 /gen_single
+  │
+  ▼
+合成结束，TTS 插件删掉 tts_busy.flag
+  │
+  ▼
+VRAM Switcher 恢复：等 ComfyUI 队列跑空 → 停图像服务 → 拉起本地 LLM
+```
+
+关键点：
+
+- `tts_ready.flag` 必须在**真正停完 LLM 之后**写。TTS 抢跑会让 `s2mel` 权重被 Windows 换页：实测 `0.12 s/步 → 30 s/步`，25 步要 731 秒。
+- 电话场景下 busy flag 每 1.5 秒续一次，避免被看门狗当成崩溃残留。
+- 900 秒没更新的 busy flag 会被清理，防止进程崩了以后永远卡在“合成中”。
+- `version_selector: auto` 跟随正在运行的 2.5 / 2.0；两个都没起时用 `default_version`。
+- IndexTTS 冷启动约 60 秒，TTS 侧等待 ready 的超时要给够（生产用 150 秒）。
+
+最小 profile：
+
+```json
+{
+  "services": {
+    "tts": {
+      "enabled": true,
+      "port": 7860,
+      "process_names": ["python.exe"],
+      "cmdline_contains": ["webui.py"],
+      "cmdline_any": ["IndexTTS", "Index-TTS"],
+      "stop": {"timeout_seconds": 20, "tree": false},
+      "busy_flag": "${DATA_DIR}/tts_busy.flag",
+      "ready_flag": "${DATA_DIR}/tts_ready.flag",
+      "flag_stale_seconds": 900,
+      "start_cooldown_seconds": 150,
+      "version_selector": "auto",
+      "default_version": "2.5",
+      "versions": {
+        "2.5": {
+          "args": ["D:/AI/IndexTTS2.5/.venv/Scripts/python.exe",
+                   "D:/AI/IndexTTS2.5/webui.py", "--version", "2.5", "--fp16"],
+          "cwd": "D:/AI/IndexTTS2.5"
+        }
+      }
+    }
+  }
+}
+```
+
+完整的适配器代码、AstrBot 钩子优先级和失败排查见 [`docs/indextts.md`](docs/indextts.md)。**注意**：这个仓库只提供调度侧；你的 TTS 插件必须按上面的协议写/删 flag，否则联动不会生效。
 
 ## Profile 参考
 
@@ -286,6 +391,15 @@ python -m unittest discover -s tests -v
 
 CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 / 3.11 / 3.12 上跑单元测试。
 
+## 起源
+
+- **2026-08**：第一版写在一个本地 AI 陪伴项目里。当时她在 AstrBot 里用本地 LLM 聊天、用 IndexTTS 发语音、用 ComfyUI 自拍，三件事只能手动杀进程轮换，经常把正在生成的回复卡死。
+- **2026-09-28**：一次自拍请求撞上 ComfyUI 冷启动（当时只等 120 秒），插件误判未就绪，请求落到云端节点，触发隐私事故。此后把就绪等待改成 300 秒，并把“停/起”做成显式状态机。
+- **2026-10**：重构成 profile 驱动的 2.0，同一套核心接上 AstrBot 插件与 DSH 原生 Cordis 插件，开源。
+- **2026-10-26**：公开仓库。代码在公开前已经在一台 12 GB 机器上跑了两个多月。
+
+公开时间不等于开始时间。这段历史写在这里，是因为在“谁先”这个问题上，最早的生产日志比仓库创建日期更有说服力；也是因为这个项目的第一需求从来不是“调度 GPU”，而是“让她在只有一张 12 GB 卡的情况下，仍然能同时聊天、发语音和自拍”。
+
 ## 已知限制
 
 - Windows 优先；Linux 有基本的 `ps`/`kill` 支持，但进程名和启动器差异需要自行适配。
@@ -313,7 +427,7 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
 > `data/plugins/astrbot_plugin_vram_switcher/`（取自 `metadata.yaml` 的 `name`），
 > 两者不一致是正常的。
 
-发布信息：[v2.0.2 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.2)。
+发布信息：[v2.0.3 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.3)。
 
 ## 安全模型
 

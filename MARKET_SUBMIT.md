@@ -1,6 +1,6 @@
 # 市场上架清单
 
-仓库已推送到 <https://github.com/xiaoxiao150/vram-switcher>，v2.0.3 Release 已含预构建 tarball。
+仓库已推送到 <https://github.com/xiaoxiao150/vram-switcher>，v2.0.4 Release 已含预构建 tarball。
 下列两步需要仓库作者的 GitHub 账号在网页上完成，命令行 token 权限不足。
 
 ## 1. DSH 插件市场（awesome-dsh-plugin）
@@ -21,7 +21,7 @@ category: tools
 description:
   en: AstrBot/DSH-native GPU coordination for local AI companions: LLM, IndexTTS and ComfyUI take turns, no proxy.
   zh: 面向本地 AI 陪伴的 AstrBot/DSH 原生显存协调：LLM、IndexTTS、ComfyUI 轮流用卡，不加代理。
-tarball: https://github.com/xiaoxiao150/vram-switcher/releases/download/v2.0.3/dsh-vram-switcher-2.0.3.tgz
+tarball: https://github.com/xiaoxiao150/vram-switcher/releases/download/v2.0.4/dsh-vram-switcher-2.0.4.tgz
 ```
 
 合并后站点与 DSH 市场通常一天内自动收录。

@@ -39,6 +39,107 @@ _FLAG_KEY = "_vram_switcher_active"
 _FLAG_REASON = "_vram_switcher_reason"
 _FLAG_INDEXTTS_KILLED = "_vram_switcher_indextts_killed"
 
+# Set by VRAMSwitcherPlugin.__init__. The 2.0 refactor kept the instance
+# methods but dropped the module-level helpers that qq_voice_adapter imports
+# by module path; these thin wrappers restore that contract without bringing
+# back the old hard-coded paths.
+_PLUGIN_INSTANCE: Any = None
+
+
+def _is_indextts_running() -> bool:
+    """Compatibility: is the configured TTS service listening?"""
+    inst = _PLUGIN_INSTANCE
+    if inst is None:
+        return False
+    try:
+        return bool(inst._orchestrator.is_tts_running())
+    except Exception as exc:
+        logger.debug(f"[VRAMSwitcher] compat _is_indextts_running failed: {exc}")
+        return False
+
+
+def _is_tts_busy() -> bool:
+    """Compatibility: is a TTS synthesis window open? Stale flags are cleared."""
+    inst = _PLUGIN_INSTANCE
+    if inst is None:
+        return False
+    try:
+        return bool(inst._orchestrator.tts_busy())
+    except Exception as exc:
+        logger.debug(f"[VRAMSwitcher] compat _is_tts_busy failed: {exc}")
+        return False
+
+
+def _is_comfyui_running() -> bool:
+    """Compatibility: is ComfyUI's port listening?"""
+    inst = _PLUGIN_INSTANCE
+    if inst is None:
+        return False
+    try:
+        return bool(inst._orchestrator.is_image_running())
+    except Exception as exc:
+        logger.debug(f"[VRAMSwitcher] compat _is_comfyui_running failed: {exc}")
+        return False
+
+
+def _is_comfyui_process_running() -> bool:
+    """Compatibility: has the ComfyUI process started (port may not be bound yet)?"""
+    inst = _PLUGIN_INSTANCE
+    if inst is None:
+        return False
+    try:
+        return bool(
+            inst._orchestrator.system.service_process_running(
+                inst._cfg.service("image")
+            )
+        )
+    except Exception as exc:
+        logger.debug(f"[VRAMSwitcher] compat _is_comfyui_process_running failed: {exc}")
+        return False
+
+
+def _kill_indextts_webui() -> bool:
+    """Compatibility: stop the TTS webui, but never mid-synthesis.
+
+    qq_voice_adapter calls this every 60 s during the 23:00-07:00 quiet
+    window. If a synthesis is in flight, skip it and let the next tick
+    retry; the busy flag goes stale after ``flag_stale_seconds`` anyway.
+    """
+    inst = _PLUGIN_INSTANCE
+    if inst is None:
+        return False
+    try:
+        if inst._orchestrator.tts_busy():
+            logger.info("[VRAMSwitcher] TTS 合成中，跳过停止 IndexTTS")
+            return False
+        if not inst._cfg.service_enabled("tts"):
+            return False
+        return bool(
+            inst._orchestrator.system.stop_service(
+                "tts", inst._cfg.service("tts")
+            )
+        )
+    except Exception as exc:
+        logger.error(f"[VRAMSwitcher] compat _kill_indextts_webui failed: {exc}")
+        return False
+
+
+def _start_indextts_webui(version: str = "2.5") -> bool:
+    """Compatibility: start the configured TTS service outside quiet hours."""
+    inst = _PLUGIN_INSTANCE
+    if inst is None:
+        return False
+    try:
+        if inst._orchestrator.is_tts_running():
+            return True
+        if inst._orchestrator._night_quiet():
+            logger.info("[VRAMSwitcher] 夜间静默：不启动 IndexTTS")
+            return False
+        return bool(inst._orchestrator._start_tts(version))
+    except Exception as exc:
+        logger.error(f"[VRAMSwitcher] compat _start_indextts_webui failed: {exc}")
+        return False
+
 
 class _AstrBotProviderHooks(NullProviderHooks):
     """Reserved for users who want provider switching.
@@ -66,10 +167,11 @@ class _AstrBotProviderHooks(NullProviderHooks):
     "astrbot_plugin_vram_switcher",
     "VRAM Switcher",
     "本地 GPU 任务协调器：LLM / TTS / 生图服务按需让出显存，完成后恢复。",
-    "2.0.3",
+    "2.0.4",
 )
 class VRAMSwitcherPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):
+        global _PLUGIN_INSTANCE
         super().__init__(context)
         self.config = config or {}
         self.plugin_dir = Path(__file__).resolve().parent
@@ -117,6 +219,7 @@ class VRAMSwitcherPlugin(Star):
             f"services={summary['services']} engine={summary['llm_engine']} "
             f"tts_selector={summary['tts_selector']}"
         )
+        _PLUGIN_INSTANCE = self
         try:
             self._tts_task = asyncio.create_task(self._orchestrator.start())
         except RuntimeError:
@@ -282,6 +385,9 @@ class VRAMSwitcherPlugin(Star):
         event.set_extra(_FLAG_KEY, False)
 
     async def terminate(self) -> None:
+        global _PLUGIN_INSTANCE
+        if _PLUGIN_INSTANCE is self:
+            _PLUGIN_INSTANCE = None
         task = self._tts_task
         self._tts_task = None
         if task and not task.done():

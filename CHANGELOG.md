@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.4
+
+- Restore the module-level compatibility helpers used by `qq_voice_adapter`:
+  `_is_indextts_running`, `_kill_indextts_webui`, `_start_indextts_webui`,
+  `_is_comfyui_running`, `_is_comfyui_process_running`, plus `_is_tts_busy`.
+  The 2.0 refactor kept the instance methods but dropped these, so the
+  AstrBot voice watchdog silently did nothing.
+- Do not stop IndexTTS in the middle of a synthesis: `_kill_indextts_webui`
+  skips while `tts_busy.flag` is fresh, and `qq_voice_adapter` skips its
+  stop/start checks while busy.
+- Document the compatibility contract in the README.
+
 ## 2.0.3
 
 - Reposition the project around local AI companions on AstrBot / DeepSeek

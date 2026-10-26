@@ -3,7 +3,7 @@
   "manifestVersion": "0.15",
   "id": "vram-switcher.native",
   "name": "dsh-vram-switcher",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "license": "MIT",
   "facets": {
     "host": {

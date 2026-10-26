@@ -382,6 +382,11 @@ AstrBot 插件配置里的 `extra_tts_keywords` / `extra_comfyui_prefixes` 会�
 - `await plugin._prepare_switch(event, "tool:...")`
 - `await plugin._recover_after_tts()`
 - `on_decorating_result(event)`（也会把最终恢复跑完）
+- 模块级兼容函数（`qq_voice_adapter` 的看门狗使用）：
+  `_is_indextts_running`、`_kill_indextts_webui`、`_start_indextts_webui`、
+  `_is_comfyui_running`、`_is_comfyui_process_running`、`_is_tts_busy`
+- 夜间静默时，`_kill_indextts_webui()` 在 `tts_busy.flag` 有效期间会跳过，
+  避免把正在合成的语音拦腰杀掉；合成结束后下一轮看门狗再停
 - flag 路径可通过 profile 配置；默认仍建议放在 `plugin_data/astrbot_plugin_vram_switcher/`
 
 如果其它插件硬编码了 flag 路径，保持 `busy_flag` / `ready_flag` 指向同一位置即可。
@@ -459,7 +464,7 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
 > `data/plugins/astrbot_plugin_vram_switcher/`（取自 `metadata.yaml` 的 `name`），
 > 两者不一致是正常的。
 
-发布信息：[v2.0.3 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.3)。
+发布信息：[v2.0.4 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.4)。
 
 ## 安全模型
 

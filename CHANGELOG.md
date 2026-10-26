@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.1
+
+- Move the DSH bundle patch to the repository root (`cordis.patch.yml`), matching
+  the documented DSH package layout.
+- Correct prerelease ranges for `engines.dsh` and the `@deepseek-ai/cordis` peer.
+- CI now validates `dsh-plugin.json` and the npm tarball contents.
+
 ## 2.0.0
 
 - Refactored the script into a configurable coordinator:

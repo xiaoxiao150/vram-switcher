@@ -295,7 +295,7 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
 > `data/plugins/astrbot_plugin_vram_switcher/`（取自 `metadata.yaml` 的 `name`），
 > 两者不一致是正常的。
 
-发布信息：[v2.0.0 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.0)。
+发布信息：[v2.0.1 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.1)。
 
 ## License
 

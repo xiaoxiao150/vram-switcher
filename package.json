@@ -1,6 +1,6 @@
 {
   "name": "dsh-vram-switcher",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Native DSH Cordis plugin for coordinating local LLM, TTS and ComfyUI GPU workloads.",
   "type": "module",
   "main": "dsh-plugin/index.js",

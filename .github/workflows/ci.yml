@@ -22,3 +22,20 @@ jobs:
         run: python -m compileall -q main.py mcp_server.py vram_switcher
       - name: Unit tests
         run: python -m unittest discover -s tests -v
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate DSH manifest and package shape
+        run: |
+          node -e "const m=require('./dsh-plugin.json');if(m.manifestVersion!=='0.15')process.exit(1);if(!m.facets?.host?.entry)process.exit(1)"
+          node -e "const p=require('./package.json');if(!p.dsh?.bundle?.patch)process.exit(1)"
+          test -f cordis.patch.yml
+      - name: Check npm tarball contents
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e "const p=require('/tmp/pack.json')[0];const names=p.files.map(f=>f.path);const bad=names.filter(n=>n.includes('__pycache__')||n.endsWith('.pyc')||n.startsWith('tests/'));if(bad.length){console.error('unexpected files',bad);process.exit(1)}"

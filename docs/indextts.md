@@ -289,3 +289,37 @@ AstrBot 适配层的触发点：
 - 它不修改 IndexTTS 本身，也不读取音频内容。
 - 它不能替代 TTS 自己的错误处理；合成失败时仍要删 busy，否则要等 900 秒清理。
 - 如果你的 TTS 有真正的 unload API，优先用 API（更快、无需重启进程）；文件协议是给“只能停进程”的服务的。
+
+## 11. 不用 AstrBot / DSH 也可以
+
+核心包 `vram_switcher` 不依赖宿主。你自己的 AI 陪伴服务可以直接用 `VramService`：
+
+```python
+from vram_switcher import load_config
+from vram_switcher.service import VramService
+
+cfg = load_config(
+    {"profile_path": r"D:/vram/profile.local.json"},
+    plugin_dir=r"D:/vram",
+    data_dir=r"D:/vram/data",
+)
+service = VramService(cfg)
+await service.start()
+
+await service.acquire("image", reason="selfie")   # 停 LLM、起 ComfyUI
+# ... 出图 ...
+await service.release("selfie")                   # 停 ComfyUI、恢复 LLM
+```
+
+语音不要用 `acquire("tts")` 包住整段合成再 `release`：`acquire` 只知道“我现在要卡”，不知道合成何时真正结束。TTS 仍用本文的 busy/ready 协议，调度器会在 `busy` 消失时自动恢复。
+
+---
+
+## 附：相关文件
+
+- 调度侧：`vram_switcher/orchestrator.py`（`tts_watch` / `prepare` / `recover`）
+- 配置：`vram_switcher/config.py`
+- AstrBot 适配：`main.py`
+- DSH 原生工具：`dsh-plugin/index.js` + `dsh-plugin/daemon.py`
+- 对照：`docs/comparison.md`
+

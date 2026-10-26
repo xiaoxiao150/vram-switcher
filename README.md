@@ -427,6 +427,19 @@ python -m unittest discover -s tests -v
 
 CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 / 3.11 / 3.12 上跑单元测试。
 
+### 开发目录与部署（重要）
+
+**本仓库是开发副本。** 不要在 AstrBot 的
+`data/plugins/astrbot_plugin_vram_switcher/` 里直接编辑或提交；生产目录只由
+`scripts/deploy.py` 覆盖，并且不再包含 `.git`。改完、跑完测试再部署：
+
+```bash
+python scripts/deploy.py --dry-run
+python scripts/deploy.py
+```
+
+部署后按单个 PID 重启 AstrBot（不要 `/T` 树杀）。这样开发中的重构不会直接改坏正在运行的陪伴链路。
+
 ## 起源
 
 - **2026-08**：第一版写在一个本地 AI 陪伴项目里。当时她在 AstrBot 里用本地 LLM 聊天、用 IndexTTS 发语音、用 ComfyUI 自拍，三件事只能手动杀进程轮换，经常把正在生成的回复卡死。

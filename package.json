@@ -1,0 +1,56 @@
+{
+  "name": "dsh-vram-switcher",
+  "version": "2.0.0",
+  "description": "Native DSH Cordis plugin for coordinating local LLM, TTS and ComfyUI GPU workloads.",
+  "type": "module",
+  "main": "dsh-plugin/index.js",
+  "exports": {
+    ".": "./dsh-plugin/index.js",
+    "./cordis.patch.yml": "./dsh-plugin/cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dsh-plugin",
+    "vram_switcher",
+    "profile.example.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "dsh-plugin.json"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "vram",
+    "gpu",
+    "comfyui",
+    "tts",
+    "llama.cpp"
+  ],
+  "license": "MIT",
+  "engines": {
+    "dsh": ">=0.2.0-rc.2"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./dsh-plugin/cordis.patch.yml"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoxiao150/vram-switcher.git"
+  },
+  "homepage": "https://github.com/xiaoxiao150/vram-switcher",
+  "bugs": {
+    "url": "https://github.com/xiaoxiao150/vram-switcher/issues"
+  }
+}

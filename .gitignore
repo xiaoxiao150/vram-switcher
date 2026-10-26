@@ -1,0 +1,28 @@
+__pycache__/
+*.py[cod]
+*.so
+
+# Local, machine-specific profile: paths and ports are private.
+profile.local.json
+*.local.json
+
+# Backups and generated data from the original deployment.
+*.bak_*
+*.log
+logs/
+data/
+
+# Python tooling
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Node/build artifacts occasionally copied by users.
+node_modules/
+
+*.tgz

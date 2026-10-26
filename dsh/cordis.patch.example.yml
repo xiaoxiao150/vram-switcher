@@ -1,0 +1,16 @@
+# Native DSH Cordis plugin configuration.
+#
+# Install `dsh-vram-switcher` through the DSH market, or add it as a local
+# package dependency (see README.md). The package's own bundle patch inserts
+# the `vram-switcher` row; this file only overrides its config by id.
+#
+# Replace every <angle-bracket> value. Keep profilePath/dataDir identical to
+# AstrBot's profile/data dir so both adapters share coordinator.lock.
+
+- id: vram-switcher
+  config:
+    enabled: true
+    profilePath: '<SHARED_DATA_DIR>/profile.local.json'
+    dataDir: '<SHARED_DATA_DIR>'
+    pythonPath: '<PYTHON_WITH_PSUTIL_OR_DSH_PYTHON>'
+    leaseSeconds: 900

@@ -1,0 +1,8 @@
+**/__pycache__/**
+**/*.pyc
+**/*.pyo
+**/*.bak_*
+**/*.log
+profile.local.json
+tests/
+*.tgz

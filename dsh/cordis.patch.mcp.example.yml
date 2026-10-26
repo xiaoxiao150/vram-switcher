@@ -1,0 +1,25 @@
+# Append this top-level patch entry to a DSH profile's cordis.patch.yml.
+# Desktop:  %USERPROFILE%\.dsh\profiles\desktop\cordis.patch.yml
+# Headless: %USERPROFILE%\.dsh\profiles\headless\cordis.patch.yml
+#
+# Replace every <angle-bracket> value. Keep the same --profile and --data-dir
+# as the AstrBot plugin so both adapters share the coordinator lock.
+
+- insert:
+    - id: vram-switcher
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: vram
+        transport: stdio
+        command: '<DSH_PYTHON>'
+        args:
+          - '<PLUGIN_DIR>/mcp_server.py'
+          - '--profile'
+          - '<SHARED_DATA_DIR>/profile.local.json'
+          - '--data-dir'
+          - '<SHARED_DATA_DIR>'
+          - '--lease-seconds'
+          - '900'
+        cwd: '<PLUGIN_DIR>'
+        toolCallTimeoutMs: 900000
+        failOnStartupError: false

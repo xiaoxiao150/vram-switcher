@@ -1,0 +1,50 @@
+{
+  "enabled": {
+    "description": "✅ 启用 VRAM Switcher",
+    "type": "bool",
+    "default": true,
+    "hint": "关闭后只加载插件，不监控 TTS、不启动/停止任何进程。"
+  },
+  "profile_path": {
+    "description": "⚙️ 服务 profile 路径",
+    "type": "string",
+    "default": "profile.local.json",
+    "hint": "相对于插件目录，或填绝对路径。请从 profile.example.json 复制并填写本机路径、端口和启动命令。"
+  },
+  "extra_tts_keywords": {
+    "description": "额外的语音触发关键词",
+    "type": "list",
+    "default": [],
+    "hint": "默认已包含「语音」。命中后会在 TTS 前释放本地 LLM 显存。"
+  },
+  "extra_comfyui_prefixes": {
+    "description": "额外的生图指令前缀",
+    "type": "list",
+    "default": [],
+    "hint": "按消息首个词匹配；例如 aimg、img2img、改图。"
+  },
+  "index_tts_version": {
+    "description": "TTS 版本选择",
+    "type": "string",
+    "default": "auto",
+    "hint": "auto 会尽量跟随正在运行的版本；也可以填 profile 里 versions 的键，例如 2.5 或 2.0。"
+  },
+  "free_indextts_before_gen": {
+    "description": "生图前停止 TTS 服务",
+    "type": "bool",
+    "default": true,
+    "hint": "TTS 服务常驻会占显存；生图前停掉可以降低换页/OOM 风险。"
+  },
+  "keep_indextts_resident": {
+    "description": "语音结束后保留 TTS 服务常驻",
+    "type": "bool",
+    "default": true,
+    "hint": "常驻时下次合成更快，但会和 LLM 抢显存；显存很紧可关闭。"
+  },
+  "local_llm_engine": {
+    "description": "本地 LLM 引擎 profile",
+    "type": "string",
+    "default": "moe",
+    "hint": "对应 profile.local.json 中 services.llm.start.profiles 的键，例如 moe、dense27b。"
+  }
+}

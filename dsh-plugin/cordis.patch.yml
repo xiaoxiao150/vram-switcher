@@ -1,0 +1,12 @@
+# Native DSH Cordis plugin. The package's dsh.bundle.patch points here.
+# Override this id in the profile patch to fill in profilePath / dataDir / pythonPath.
+
+- insert:
+    - id: vram-switcher
+      name: './index.js'
+      config:
+        enabled: true
+        profilePath: ''
+        dataDir: ''
+        pythonPath: ''
+        leaseSeconds: 900

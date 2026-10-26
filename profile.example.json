@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "enabled": true,
+  "services": {
+    "llm": {
+      "enabled": true,
+      "label": "Local LLM",
+      "port": 8080,
+      "host": "127.0.0.1",
+      "process_names": [
+        "llama-server.exe"
+      ],
+      "stop": {
+        "timeout_seconds": 15,
+        "tree": true
+      },
+      "start": {
+        "engine": "moe",
+        "profiles": {
+          "moe": {
+            "args": [
+              "D:/AI/llama/llama-server.exe",
+              "-m",
+              "D:/AI/llama/models/model.gguf",
+              "-ngl",
+              "99",
+              "-c",
+              "32768",
+              "--host",
+              "127.0.0.1",
+              "--port",
+              "8080"
+            ],
+            "cwd": "D:/AI/llama",
+            "log_file": "${DATA_DIR}/llm.log"
+          },
+          "dense27b": {
+            "args": [
+              "D:/AI/llama/llama-server.exe",
+              "-m",
+              "D:/AI/llama/models/dense.gguf",
+              "-ngl",
+              "99",
+              "-c",
+              "32768",
+              "--host",
+              "127.0.0.1",
+              "--port",
+              "8080"
+            ],
+            "cwd": "D:/AI/llama",
+            "log_file": "${DATA_DIR}/llm.log"
+          }
+        }
+      },
+      "ready": {
+        "type": "process",
+        "timeout_seconds": 50
+      },
+      "recovery_wait_seconds": 45,
+      "night_quiet": {
+        "enabled": true,
+        "start": "23:00",
+        "end": "07:00"
+      }
+    },
+    "tts": {
+      "enabled": true,
+      "label": "TTS service",
+      "port": 7860,
+      "host": "127.0.0.1",
+      "process_names": [
+        "python.exe"
+      ],
+      "cmdline_contains": [
+        "webui.py"
+      ],
+      "cmdline_any": [
+        "IndexTTS",
+        "Index-TTS"
+      ],
+      "stop_extra": [
+        {
+          "process_names": [
+            "cmd.exe"
+          ],
+          "cmdline_any": [
+            "IndexTTS"
+          ]
+        }
+      ],
+      "stop": {
+        "timeout_seconds": 20,
+        "tree": false
+      },
+      "busy_flag": "${DATA_DIR}/tts_busy.flag",
+      "ready_flag": "${DATA_DIR}/tts_ready.flag",
+      "flag_stale_seconds": 900,
+      "start_cooldown_seconds": 150,
+      "version_selector": "auto",
+      "default_version": "2.5",
+      "detect": {
+        "2.5": [
+          "IndexTTS2.5",
+          "--version 2.5"
+        ],
+        "2.0": [
+          "Index-TTS"
+        ]
+      },
+      "versions": {
+        "2.5": {
+          "args": [
+            "D:/AI/IndexTTS2.5/.venv/Scripts/python.exe",
+            "D:/AI/IndexTTS2.5/webui.py",
+            "--version",
+            "2.5",
+            "--fp16"
+          ],
+          "cwd": "D:/AI/IndexTTS2.5",
+          "env": {
+            "PYTHONUNBUFFERED": "1"
+          },
+          "log_file": "D:/AI/IndexTTS2.5/logs/webui.log"
+        },
+        "2.0": {
+          "args": [
+            "D:/AI/IndexTTS2.5/.venv/Scripts/python.exe",
+            "D:/AI/IndexTTS2/webui.py",
+            "--fp16"
+          ],
+          "cwd": "D:/AI/IndexTTS2",
+          "env": {
+            "PYTHONUNBUFFERED": "1",
+            "HF_CACHE_DIR": "D:/AI/IndexTTS2.5/checkpoints/hf_cache"
+          },
+          "log_file": "D:/AI/IndexTTS2.5/logs/webui.log"
+        }
+      }
+    },
+    "image": {
+      "enabled": true,
+      "label": "ComfyUI",
+      "port": 8188,
+      "host": "127.0.0.1",
+      "process_names": [
+        "python.exe"
+      ],
+      "cmdline_contains": [
+        "ComfyUI"
+      ],
+      "stop_by_port": true,
+      "stop": {
+        "timeout_seconds": 20,
+        "tree": false
+      },
+      "start": {
+        "args": [
+          "D:/AI/ComfyUI/python/python.exe",
+          "-u",
+          "-s",
+          "D:/AI/ComfyUI/ComfyUI/main.py",
+          "--windows-standalone-build"
+        ],
+        "cwd": "D:/AI/ComfyUI/ComfyUI",
+        "log_file": "${DATA_DIR}/comfyui_console.log"
+      },
+      "ready": {
+        "type": "port",
+        "timeout_seconds": 300
+      },
+      "queue": {
+        "timeout_seconds": 420,
+        "interval_seconds": 6
+      }
+    }
+  },
+  "aux_services": [
+    {
+      "key": "prompt_optimizer",
+      "enabled": true,
+      "label": "Prompt optimizer",
+      "process_names": [
+        "pe-server.exe"
+      ],
+      "stop": {
+        "timeout_seconds": 10,
+        "tree": true
+      }
+    }
+  ],
+  "triggers": {
+    "tts_keywords": [
+      "语音"
+    ],
+    "image_prefixes": [
+      "aimg",
+      "img2img",
+      "comfyuioutput",
+      "改图",
+      "/改图"
+    ],
+    "image_tool_names": [
+      "generate_selfie",
+      "generate_image",
+      "comfyui_txt2img"
+    ],
+    "tts_reply_marker_pattern": "[\\[【]\\s*语音\\s*[\\]】]"
+  },
+  "policy": {
+    "free_tts_before_image": true,
+    "keep_tts_resident": true,
+    "tts_poll_seconds": 2
+  },
+  "lock_file": "${DATA_DIR}/coordinator.lock",
+  "lock_timeout_seconds": 900
+}

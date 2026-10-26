@@ -263,9 +263,8 @@ schema, and checks that the published npm tarball contains no caches or tests.
   project. She chatted through a local LLM, spoke through IndexTTS, and sent
   selfies through ComfyUI; the only way to switch was to kill processes by hand,
   which regularly killed the reply that was being generated.
-- **2026-09-28**: a selfie request hit a ComfyUI cold start (the wait window was
-  120 s at the time), the plugin assumed it was not ready, and the request fell
-  through to a cloud node — a privacy incident. The readiness window became
+- **2026-09-28**: a request hit a ComfyUI cold-start window (the wait was 120 s
+  at the time) and fell through to a cloud node. The readiness window became
   300 s, and start/stop became an explicit state machine.
 - **2026-10**: rewritten as the profile-driven 2.0 core, with native AstrBot and
   DSH adapters, then open-sourced.

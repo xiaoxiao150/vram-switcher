@@ -298,8 +298,7 @@ CI 见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)，在 Python 3.10 
 
 - **AstrBot**：WebUI → 插件市场 搜 **VRAM Switcher**，或
   [cloud.astrbot.app](https://cloud.astrbot.app/) 搜仓库 `xiaoxiao150/vram-switcher`。
-- **DSH**：插件市场搜 **vram-switcher**
-  （[awesome-dsh-plugin](https://awesome-dsh-plugin.com/p/xiaoxiao150/vram-switcher/)）。
+- **DSH**：已提交 [awesome-dsh-plugin 收录](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/9555)（PR #9555），合并后即可在 DSH 插件市场搜到 **vram-switcher**。
 - 源码安装：
 
   ```bash

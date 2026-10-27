@@ -132,6 +132,15 @@ class OrchestratorTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.system.state["tts"])
         self.assertTrue((self.data_dir / "tts_ready.flag").exists())
 
+    async def test_prepare_tts_does_not_start_tts_at_night(self):
+        self.orch._night_quiet = lambda: True
+        self.system.state.update({"llm": True, "tts": False})
+        ok = await self.orch.prepare("tts:语音")
+        self.assertFalse(ok)
+        self.assertFalse(self.system.state["tts"])
+        self.assertNotIn("tts", self.system.started)
+        self.assertFalse((self.data_dir / "tts_ready.flag").exists())
+
     async def test_recover_drains_image_and_restarts_llm(self):
         self.system.state.update({"llm": False, "tts": False, "image": True})
         await self.orch.recover("tool:generate_selfie")

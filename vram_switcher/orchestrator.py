@@ -180,6 +180,9 @@ class Orchestrator:
         return self.system.start_service("llm", service, profile)
 
     def _start_tts(self, version: str) -> bool:
+        if self._night_quiet():
+            self._log("info", "夜间静默：不启动 TTS 服务")
+            return False
         service = self.config.service("tts")
         versions = service.get("versions")
         if not isinstance(versions, dict):
@@ -359,6 +362,9 @@ class Orchestrator:
                             self._log("warning", "图像服务在超时前未就绪，生图可能失败")
             else:
                 if self.config.service_enabled("tts") and not self.is_tts_running():
+                    if self._night_quiet():
+                        self._log("info", "夜间静默：不启动 TTS 服务")
+                        return False
                     self._log("info", "TTS 窗口：补拉语音服务")
                     self._start_tts(self.config.tts_version())
                 if self.config.service_enabled("tts"):
@@ -368,6 +374,9 @@ class Orchestrator:
     async def ensure_tts(self) -> None:
         """Bring the configured TTS service online if it is not running."""
         if not self.config.enabled or not self.config.service_enabled("tts"):
+            return
+        if self._night_quiet():
+            self._log("info", "夜间静默：不启动 TTS 服务")
             return
         acquired = await asyncio.to_thread(self._file_lock.acquire, self._lock_timeout)
         if not acquired:

@@ -167,7 +167,7 @@ class _AstrBotProviderHooks(NullProviderHooks):
     "astrbot_plugin_vram_switcher",
     "VRAM Switcher",
     "本地 GPU 任务协调器：LLM / TTS / 生图服务按需让出显存，完成后恢复。",
-    "2.0.4",
+    "2.0.5",
 )
 class VRAMSwitcherPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):

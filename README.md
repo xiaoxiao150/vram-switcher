@@ -43,6 +43,7 @@ LLM 常驻，显存 4.9 GB / 12 GB
 - **只动你列出的东西**：进程名 + 命令行过滤 + 可选端口白名单，没有“杀掉所有 python.exe”这条路。
 - **跨进程串行**：AstrBot 插件和 DSH 插件共用 `coordinator.lock`，语音事件和生图任务不会同时切服务。
 - **一套核心，两个宿主**：AstrBot（Python 插件）与 DeepSeek Harness（原生 Cordis 插件 + 小 Python daemon）。另带 MCP stdio 服务，可给 Claude Desktop / Codex 用。
+- **可复现的实测记录**：[docs/demo.md](docs/demo.md) 有语音和生图两条交接时序，以及换页前后的数字。
 
 ## 适合谁
 
@@ -147,7 +148,7 @@ LLM 常驻
 - TTS 文件协议：`tts_busy.flag` 表示合成中，`tts_ready.flag` 表示显存已就绪
 - 为 AI 陪伴回合设计：文字回复 → 语音合成 → 自拍/改图可以在同一回合内安全切换
 - 生图队列：恢复前轮询 ComfyUI `/queue`，不打断一批多张图
-- 夜间静默：默认 23:00–07:00 不重新拉起本地 LLM
+- 夜间静默：默认 23:00–07:00 不重新拉起本地 LLM，也不启动 TTS/IndexTTS（已在跑的合成可以结束，结束后看门狗再停 webui）
 - 兼容层：`_prepare_switch`、`_recover_after_tts`、事件标记、flag 路径全部保留
 - 默认不切 provider：交给 AstrBot 的 fallback 链，避免与 `default_provider_id` 打架
 - 原生 DSH Cordis 插件 + MCP 备用入口 + 跨进程协调锁
@@ -477,7 +478,7 @@ python scripts/deploy.py
 > `data/plugins/astrbot_plugin_vram_switcher/`（取自 `metadata.yaml` 的 `name`），
 > 两者不一致是正常的。
 
-发布信息：[v2.0.4 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.4)。
+发布信息：[v2.0.5 Release](https://github.com/xiaoxiao150/vram-switcher/releases/tag/v2.0.5)。
 
 ## 安全模型
 

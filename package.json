@@ -1,6 +1,6 @@
 {
   "name": "dsh-vram-switcher",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Native DSH Cordis plugin + AstrBot adapter for local AI companions: coordinate LLM, IndexTTS and ComfyUI on one GPU.",
   "type": "module",
   "main": "dsh-plugin/index.js",

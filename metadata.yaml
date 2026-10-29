@@ -2,7 +2,7 @@ name: astrbot_plugin_vram_switcher
 display_name: VRAM Switcher
 author: vram-switcher contributors
 desc: 为本地 AI 陪伴 / AstrBot / DSH 协调 LLM、IndexTTS 与 ComfyUI 的显存，按需停启。
-version: 2.0.4
+version: 2.0.5
 category: 工具
 tags:
   - vram

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.5
+
+- Never start TTS during `night_quiet` (default 23:00–07:00). The
+  `qq_voice_adapter` watchdog stopped IndexTTS at curfew, but
+  `vram_switcher` restarted it for every post-23:00 auto TTS and the
+  watchdog stopped it again 60 s later. `_start_tts()`, the TTS branch of
+  `_prepare_locked()` and `ensure_tts()` now refuse to start it; an
+  already-running synthesis may finish, then the watchdog stops it.
+- Add a regression test for the night TTS guard.
+- Document the night behavior in the IndexTTS section.
+- Add `docs/demo.md`: a reproducible voice/image handoff walkthrough with the
+  measured before/after numbers.
+
 ## 2.0.4
 
 - Restore the module-level compatibility helpers used by `qq_voice_adapter`:

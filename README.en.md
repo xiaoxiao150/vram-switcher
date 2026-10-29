@@ -57,6 +57,8 @@ synthesizing; for a companion that boundary is the whole point.
 - **Works for two hosts from one core**: AstrBot (Python plugin) and DeepSeek
   Harness (native Cordis plugin + a small Python daemon). An MCP stdio server is
   included for Claude Desktop / Codex and friends.
+- **A reproducible log walkthrough**: [docs/demo.md](docs/demo.md) has the voice
+  and image handoff timelines with the before/after numbers (Chinese).
 
 ## Who it is for
 
@@ -231,8 +233,9 @@ One file, `profile.local.json` (git-ignored). Strings understand
 
 - `aux_services` are stopped but never started — right for a prompt optimizer
   that re-launches itself on demand.
-- `night_quiet` leaves the local LLM down overnight; set `enabled: false` if you
-  want it back immediately.
+- `night_quiet` keeps both the local LLM and TTS down overnight (23:00–07:00 by
+  default); an already-running synthesis may finish, then the watchdog stops the
+  webui. Set `enabled: false` if you want them back immediately.
 - `stop_by_port` only when the port is exclusively that service.
 - Full reference and every field: [Chinese README](README.md#profile-参考) /
   [`profile.example.json`](profile.example.json).

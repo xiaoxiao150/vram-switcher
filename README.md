@@ -463,7 +463,7 @@ python scripts/deploy.py
 
 - **AstrBot**：WebUI → 插件市场 搜 **VRAM Switcher**，或
   [cloud.astrbot.app](https://cloud.astrbot.app/) 搜仓库 `xiaoxiao150/vram-switcher`。
-- **DSH**：已提交 [awesome-dsh-plugin 收录](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/9555)（PR #9555），合并后即可在 DSH 插件市场搜到 **vram-switcher**。
+- **DSH**：已在 [awesome-dsh-plugin](https://awesome-dsh-plugin.com/p/xiaoxiao150/vram-switcher/) 收录，DSH 插件市场可搜 **vram-switcher**。目录里的 tarball 当前是 v2.0.4；v2.0.5 的夜间 TTS 守卫要等目录下次更新。
 - 源码安装：
 
   ```bash

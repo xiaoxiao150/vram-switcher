@@ -187,9 +187,10 @@ The repository is also a native Cordis plugin (`dsh-vram-switcher`): root
 | `vram_acquire` | take the GPU for `image` or `tts` (may stop the LLM) |
 | `vram_release` | give it back: drain, stop, restore the LLM |
 
-Submitted to the [awesome-dsh-plugin](https://awesome-dsh-plugin.com) catalog
-([PR #9555](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/9555));
-once merged it also appears in the DSH plugin market.
+Listed in the [awesome-dsh-plugin](https://awesome-dsh-plugin.com/p/xiaoxiao150/vram-switcher/)
+catalog and searchable as **vram-switcher** in the DSH plugin market. The catalog
+tarball currently points to v2.0.4; the v2.0.5 night-TTS guard arrives with the
+next catalog update.
 See [`dsh/README.md`](dsh/README.md) for the profile override and the caveat:
 **do not acquire while the same turn is using the local LLM** — it would stop
 the model mid-answer.

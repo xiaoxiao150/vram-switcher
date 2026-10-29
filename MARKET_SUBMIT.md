@@ -3,30 +3,15 @@
 仓库已推送到 <https://github.com/xiaoxiao150/vram-switcher>，v2.0.5 Release 已含预构建 tarball。
 下列两步需要仓库作者的 GitHub 账号在网页上完成，命令行 token 权限不足。
 
-## 1. DSH 插件市场（awesome-dsh-plugin）
+## 1. DSH 插件市场（awesome-dsh-plugin）—— 已收录
 
-1. 给仓库加 topic `dsh-plugin`：仓库 → About 右侧齿轮 → Topics。
-2. 提交 PR，新增一个文件 `data/plugins/xiaoxiao150__vram-switcher.yml`：
+条目已于 2026-10-27 被 maintainer 直接合并到 `main`，原 PR #9555 已关闭，不用再推。
+线上页面：<https://awesome-dsh-plugin.com/p/xiaoxiao150/vram-switcher/>
 
-直接点这个预填链接即可（内容已填好）：
+目录里的 tarball 当前仍指向 **v2.0.4**。要升到 v2.0.5，需要另开一个新 PR（不要重开已关闭的 #9555）或请 maintainer 更新；单行改动见
+[`.market/xiaoxiao150__vram-switcher.yml`](.market/xiaoxiao150__vram-switcher.yml)。
 
-<https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/new/main?filename=data%2Fplugins%2Fxiaoxiao150__vram-switcher.yml>
-
-文件内容见 [`.market/xiaoxiao150__vram-switcher.yml`](.market/xiaoxiao150__vram-switcher.yml)：
-
-```yaml
-url: https://github.com/xiaoxiao150/vram-switcher
-name: xiaoxiao150/vram-switcher
-category: tools
-description:
-  en: AstrBot/DSH-native GPU coordination for local AI companions: LLM, IndexTTS and ComfyUI take turns, no proxy.
-  zh: 面向本地 AI 陪伴的 AstrBot/DSH 原生显存协调：LLM、IndexTTS、ComfyUI 轮流用卡，不加代理。
-tarball: https://github.com/xiaoxiao150/vram-switcher/releases/download/v2.0.5/dsh-vram-switcher-2.0.5.tgz
-```
-
-合并后站点与 DSH 市场通常一天内自动收录。
-
-> 注意：目录要求仓库创建满 1 天（本仓库创建于 2026-10-26），如果 CI 因仓库年龄拦下，隔天再提交一次即可。
+> YAML 坑：英文描述里出现 ``: ``（冒号+空格）时整行必须加引号，否则目录解析失败。中文全角冒号不受影响。
 
 ## 2. AstrBot 插件市场（AstrBot Cloud）
 
